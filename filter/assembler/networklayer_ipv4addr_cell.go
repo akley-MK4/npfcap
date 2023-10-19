@@ -33,13 +33,13 @@ func (t *IPV4AddrValueCell) BuildInstructions(reject bool, chunk IChunk, instruc
 		*instructions = append(*instructions, jumpIf)
 	}()
 
-	allInstrNum := retAllowIndex - t.index - 1
+	allInstrNum := retAllowIndex - t.index - 1 - 1
 	skipToAllowNum := uint8(allInstrNum)
 	skipToRejectNum := uint8(allInstrNum) + 1
 
 	nextChunk := chunk.GetNextChunk()
 	if nextChunk == nil {
-		setJumpIfWithLastChunk(&jumpIf, reject, t.lastIndexTag, skipToAllowNum, skipToRejectNum)
+		setJumpIfWithLastChunk(&jumpIf, reject, t, skipToAllowNum, skipToRejectNum)
 		return
 	}
 

@@ -28,7 +28,7 @@ func (t *EthTypeCell) BuildInstructions(reject bool, chunk IChunk, instructions 
 
 	nextChunk := t.matchToSkipChunk(chunk.GetNextChunk())
 	if nextChunk == nil {
-		setJumpIfWithLastChunk(&jumpIf, reject, t.lastIndexTag, skipToAllowNum, skipToRejectNum)
+		setJumpIfWithLastChunk(&jumpIf, reject, t, skipToAllowNum, skipToRejectNum)
 		return
 	}
 

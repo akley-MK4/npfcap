@@ -13,9 +13,8 @@ type ICell interface {
 }
 
 type BaseCell struct {
-	index        int
-	lastIndexTag bool
-	nextCell     ICell
+	index    int
+	nextCell ICell
 }
 
 func (t *BaseCell) GetIndex() int {
@@ -32,10 +31,6 @@ func (t *BaseCell) GetNextCell() ICell {
 
 func (t *BaseCell) SetNextCell(cell ICell) {
 	t.nextCell = cell
-}
-
-func (t *BaseCell) SetLastIndexTag() {
-	t.lastIndexTag = true
 }
 
 func NewCellLink() *CellLink {
