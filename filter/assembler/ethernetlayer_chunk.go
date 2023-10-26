@@ -27,12 +27,13 @@ func (t *EthernetLayerChunk) checkAndAppendCells(cond *Condition) (retErr error)
 			return
 		}
 
+		t.cellLink.addCell(NewLoadAbsoluteCell(t.idx, np.EthAbsoluteOffIndex, np.EthTypeSize))
 		for i, f := range newCellFs {
 			cell := f(t.idx + i + 1)
 			t.cellLink.addCell(cell)
 		}
 
-		t.instructionsNum = t.cellLink.getLength() + 1
+		t.instructionsNum = t.cellLink.getLength()
 	}()
 
 	if len(cond.SrcIPV4List) > 0 || len(cond.DstIPV4List) > 0 {
@@ -57,8 +58,6 @@ func (t *EthernetLayerChunk) checkAndAppendCells(cond *Condition) (retErr error)
 }
 
 func (t *EthernetLayerChunk) buildInstructions(reject bool, instructions *[]bpf.Instruction, retAllowIndex int) (retErr error) {
-	*instructions = append(*instructions, bpf.LoadAbsolute{Off: np.EthAbsoluteOffIndex, Size: np.EthTypeSize})
-
 	t.cellLink.scanCells(func(cell ICell) bool {
 		if err := cell.BuildInstructions(reject, t, instructions, retAllowIndex); err != nil {
 			retErr = err

@@ -33,9 +33,7 @@ func (t *IPV4AddrValueCell) BuildInstructions(reject bool, chunk IChunk, instruc
 		*instructions = append(*instructions, jumpIf)
 	}()
 
-	allInstrNum := retAllowIndex - t.index - 1 - 1
-	skipToAllowNum := uint8(allInstrNum)
-	skipToRejectNum := uint8(allInstrNum) + 1
+	skipToAllowNum, skipToRejectNum := t.GetSkipRetConstantIndex(retAllowIndex)
 
 	nextChunk := chunk.GetNextChunk()
 	if nextChunk == nil {
@@ -85,7 +83,7 @@ func setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChu
 			if nextIPV4AddrChunk == nil {
 				jumpIf.SkipFalse = skipToAllowNum
 			} else {
-				jumpIf.SkipFalse = uint8(nextIPV4AddrChunk.GetFirstCellIndex() - cell.GetIndex() - 1 - 1)
+				jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextIPV4AddrChunk.GetFirstCellIndex())
 			}
 
 			return
@@ -95,12 +93,12 @@ func setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChu
 	}
 
 	if nextCell == nil {
-		jumpIf.SkipTrue = uint8(nextNonIPAddrChunk.GetFirstCellIndex() - cell.GetIndex() - 1 - 1)
+		jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
 		jumpIf.SkipFalse = skipToAllowNum
 		return
 	}
 
-	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - cell.GetIndex() - 1 - 1)
+	jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextCell.GetIndex())
 }
 
 func setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChunk, nextNonIPAddrChunk IChunk, cell ICell, skipToAllowNum, skipToRejectNum uint8) {
@@ -112,7 +110,7 @@ func setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChun
 			if nextIPV4AddrChunk == nil {
 				jumpIf.SkipFalse = skipToRejectNum
 			} else {
-				jumpIf.SkipFalse = uint8(nextIPV4AddrChunk.GetFirstCellIndex() - cell.GetIndex() - 1 - 1)
+				jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextIPV4AddrChunk.GetFirstCellIndex())
 			}
 
 			return
@@ -122,12 +120,12 @@ func setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChun
 	}
 
 	if nextCell == nil {
-		jumpIf.SkipTrue = uint8(nextNonIPAddrChunk.GetFirstCellIndex() - cell.GetIndex() - 1 - 1)
+		jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
 		if nextIPV4AddrChunk == nil {
 			jumpIf.SkipFalse = skipToRejectNum
 			return
 		}
 	}
 
-	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - cell.GetIndex() - 1 - 1)
+	jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextCell.GetIndex())
 }

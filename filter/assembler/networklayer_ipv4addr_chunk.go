@@ -13,17 +13,16 @@ type IPV4AddrChunk struct {
 
 func (t *IPV4AddrChunk) setCells(nIPV4List []net.IP) error {
 	t.cellLink.rest()
+	t.cellLink.addCell(NewLoadAbsoluteCell(t.idx, t.ldOff, np.IPV4Size))
 	for idx, nIP := range nIPV4List {
-		t.cellLink.addCell(NewIPV4AddrValueCell(t.idx+idx, nIP))
+		t.cellLink.addCell(NewIPV4AddrValueCell(t.idx+idx+1, nIP))
 	}
 
-	t.instructionsNum = t.cellLink.getLength() + 1
+	t.instructionsNum = t.cellLink.getLength()
 	return nil
 }
 
 func (t *IPV4AddrChunk) buildInstructions(reject bool, instructions *[]bpf.Instruction, retAllowIndex int) (retErr error) {
-	*instructions = append(*instructions, bpf.LoadAbsolute{Off: t.ldOff, Size: np.IPV4Size})
-
 	t.cellLink.scanCells(func(cell ICell) bool {
 		if err := cell.BuildInstructions(reject, t, instructions, retAllowIndex); err != nil {
 			retErr = err

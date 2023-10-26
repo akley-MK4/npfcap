@@ -18,13 +18,10 @@ func (t *EthTypeCell) BuildInstructions(reject bool, chunk IChunk, instructions 
 		if retErr != nil {
 			return
 		}
-
 		*instructions = append(*instructions, jumpIf)
 	}()
 
-	allInstrNum := retAllowIndex - t.index - 1
-	skipToAllowNum := uint8(allInstrNum)
-	skipToRejectNum := uint8(allInstrNum) + 1
+	skipToAllowNum, skipToRejectNum := t.GetSkipRetConstantIndex(retAllowIndex)
 
 	nextChunk := t.matchToSkipChunk(chunk.GetNextChunk())
 	if nextChunk == nil {
@@ -32,7 +29,13 @@ func (t *EthTypeCell) BuildInstructions(reject bool, chunk IChunk, instructions 
 		return
 	}
 
-	jumpIf.SkipTrue = uint8(nextChunk.GetFirstCellIndex() - t.index - 1)
+	jumpIdx, calErr := calculateJumpIndex(t.index, nextChunk.GetFirstCellIndex())
+	if calErr != nil {
+		retErr = calErr
+		return
+	}
+
+	jumpIf.SkipTrue = jumpIdx
 	if t.IsTailCell() {
 		if reject {
 			jumpIf.SkipFalse = skipToAllowNum
