@@ -50,11 +50,11 @@ func setIPV4AddrJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, reject bool, chunk IC
 	scanChunks(chunk.GetNextChunk(), func(c IChunk) bool {
 		if _, ok := c.(*SrcIPV4AddrChunk); ok {
 			nextIPV4AddrChunk = c
-			return false
+			return true
 		}
 		if _, ok := c.(*DstIPV4AddrChunk); ok {
 			nextIPV4AddrChunk = c
-			return false
+			return true
 		}
 		if _, ok := c.(*SrcIPV6AddrChunk); ok {
 			return true
@@ -94,11 +94,17 @@ func setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChu
 
 	if nextCell == nil {
 		jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
-		jumpIf.SkipFalse = skipToAllowNum
+		if nextIPV4AddrChunk != nil {
+			jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextIPV4AddrChunk.GetFirstCellIndex())
+		} else {
+			jumpIf.SkipFalse = skipToAllowNum
+		}
+
 		return
 	}
 
 	jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextCell.GetIndex())
+	jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
 }
 
 func setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChunk, nextNonIPAddrChunk IChunk, cell ICell, skipToAllowNum, skipToRejectNum uint8) {
@@ -123,9 +129,11 @@ func setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChun
 		jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
 		if nextIPV4AddrChunk == nil {
 			jumpIf.SkipFalse = skipToRejectNum
-			return
 		}
+		return
 	}
 
 	jumpIf.SkipFalse, _ = calculateJumpIndex(cell.GetIndex(), nextCell.GetIndex())
+	jumpIf.SkipTrue, _ = calculateJumpIndex(cell.GetIndex(), nextNonIPAddrChunk.GetFirstCellIndex())
+
 }

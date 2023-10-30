@@ -16,5 +16,8 @@ const (
 
 	IPV6AddrCellInstrNum = 2
 
-	IPProtoSize = 1
+	IPProtoSize                        = 1
+	IPProtocolIPV4AbsoluteOffIndex     = 23
+	IPProtocolIPV6AbsoluteOffIndex     = 20
+	IPProtocolIPV6FragAbsoluteOffIndex = 54
 )
