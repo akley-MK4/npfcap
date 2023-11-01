@@ -46,14 +46,14 @@ func (t *IPV4AddrValueCell) BuildInstructions(reject bool, chunk IChunk, instruc
 }
 
 func setIPV4AddrJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, reject bool, chunk IChunk, cell ICell, skipToAllowNum, skipToRejectNum uint8) {
-	var nextIPV4AddrChunk, nextNonIPVAddrChunk IChunk
+	var nextIPAddrChunk, nextNonIPAddrChunk IChunk
 	scanChunks(chunk.GetNextChunk(), func(c IChunk) bool {
 		if _, ok := c.(*SrcIPV4AddrChunk); ok {
-			nextIPV4AddrChunk = c
+			nextIPAddrChunk = c
 			return true
 		}
 		if _, ok := c.(*DstIPV4AddrChunk); ok {
-			nextIPV4AddrChunk = c
+			nextIPAddrChunk = c
 			return true
 		}
 		if _, ok := c.(*SrcIPV6AddrChunk); ok {
@@ -63,15 +63,15 @@ func setIPV4AddrJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, reject bool, chunk IC
 			return true
 		}
 
-		nextNonIPVAddrChunk = c
+		nextNonIPAddrChunk = c
 		return false
 	})
 
 	if reject {
-		setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf, nextIPV4AddrChunk, nextNonIPVAddrChunk, cell, skipToAllowNum, skipToRejectNum)
+		setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf, nextIPAddrChunk, nextNonIPAddrChunk, cell, skipToAllowNum, skipToRejectNum)
 		return
 	}
-	setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf, nextIPV4AddrChunk, nextNonIPVAddrChunk, cell, skipToAllowNum, skipToRejectNum)
+	setIPV4AddrAllowJumpIfWithoutLastChunk(jumpIf, nextIPAddrChunk, nextNonIPAddrChunk, cell, skipToAllowNum, skipToRejectNum)
 }
 
 func setIPV4AddrRejectJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextIPV4AddrChunk, nextNonIPAddrChunk IChunk, cell ICell, skipToAllowNum, skipToRejectNum uint8) {

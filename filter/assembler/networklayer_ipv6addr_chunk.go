@@ -18,7 +18,7 @@ func (t *IPV6AddrChunk) setCells(nIPV6List []net.IP) error {
 		t.cellLink.addCell(t.newCellFunc(cellIdx, nIP))
 	}
 
-	t.instructionsNum = t.cellLink.getLength() * 8
+	t.instructionsNum = t.cellLink.getLength() * np.OneIPV6AddrInstrNum
 	return nil
 }
 

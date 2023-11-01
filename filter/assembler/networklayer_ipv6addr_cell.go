@@ -48,8 +48,6 @@ func setIPV6AddrRejectJumpIfWithLastChunk(jumpIf *bpf.JumpIf, nIPValIdx int, cel
 		return
 	}
 
-	// jump to next cell
-	//jumpIf.SkipFalse = uint8(nextCell.GetIndex() - cell.GetIndex() - IPV6AddrCellInstrNum - nIPValIdx*IPV6AddrCellInstrNum)
 	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
 }
 
@@ -71,7 +69,6 @@ func setIPV6AddrAllowJumpIfWithLastChunk(jumpIf *bpf.JumpIf, nIPValIdx int, cell
 		return
 	}
 
-	//jumpIf.SkipFalse = uint8(nextCell.GetIndex() - (cell.GetIndex() + IPV6AddrCellInstrNum + nIPValIdx*IPV6AddrCellInstrNum))
 	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
 }
 
@@ -84,101 +81,92 @@ func setIPV6AddrJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextChunk IChunk, rej
 }
 
 func setIPV6AddrRejectJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextChunk IChunk, nIPValIdx int, cell ICell, skipToAllowNum, skipToRejectNum uint8) {
-	var matchIPAddrChunk, nonIPAddrChunk IChunk
+	var nextIPAddrChunk, nextNonIPAddrChunk IChunk
+	cellIPValIndex := cell.GetIndex() + 1 + nIPValIdx*np.IPV6AddrCellInstrNum
 	tailIPVal := (nIPValIdx + 1) == np.IPV6ValuePartsNum
 
 	scanChunks(nextChunk, func(c IChunk) bool {
 		if _, ok := c.(*SrcIPV6AddrChunk); ok {
-			if matchIPAddrChunk == nil {
-				matchIPAddrChunk = c
+			if nextIPAddrChunk == nil {
+				nextIPAddrChunk = c
 			}
 			return true
 		}
 		if _, ok := c.(*DstIPV6AddrChunk); ok {
-			if matchIPAddrChunk == nil {
-				matchIPAddrChunk = c
+			if nextIPAddrChunk == nil {
+				nextIPAddrChunk = c
 			}
 			return true
 		}
 
-		nonIPAddrChunk = c
-		return true
+		nextNonIPAddrChunk = c
+		return false
 	})
 
-	if tailIPVal && nonIPAddrChunk == nil {
-		jumpIf.SkipTrue = skipToRejectNum
-		return
-	}
-
 	nextCell := cell.GetNextCell()
-	if nextCell == nil {
-		if matchIPAddrChunk != nil {
-			jumpIf.SkipFalse = uint8(matchIPAddrChunk.GetFirstCellIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
-			return
-		}
 
-		jumpIf.SkipFalse = skipToAllowNum
-		return
+	if tailIPVal {
+		if nextNonIPAddrChunk != nil {
+			jumpIf.SkipTrue, _ = calculateJumpIndex(cellIPValIndex, nextNonIPAddrChunk.GetFirstCellIndex())
+		} else {
+			jumpIf.SkipTrue = skipToRejectNum
+		}
 	}
 
-	//if tailIPVal && nonIPAddrChunk == nil {
-	//	jumpIf.SkipTrue = skipToRejectNum
-	//	return
-	//}
+	if nextCell == nil {
+		if nextIPAddrChunk != nil {
+			jumpIf.SkipFalse = uint8(nextIPAddrChunk.GetFirstCellIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
+		} else {
+			jumpIf.SkipFalse = skipToAllowNum
+		}
+		return
+	}
 
 	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
 }
 
 func setIPV6AddrAllowJumpIfWithoutLastChunk(jumpIf *bpf.JumpIf, nextChunk IChunk, nIPValIdx int, cell ICell, skipToAllowNum, skipToRejectNum uint8) {
-	var matchIPAddrChunk, nonIPAddrChunk IChunk
+	var nextIPVAddrChunk, nextNonIPAddrChunk IChunk
+	cellIPValIndex := cell.GetIndex() + 1 + nIPValIdx*np.IPV6AddrCellInstrNum
 	tailIPVal := (nIPValIdx + 1) == np.IPV6ValuePartsNum
 
 	scanChunks(nextChunk, func(c IChunk) bool {
 		if _, ok := c.(*SrcIPV6AddrChunk); ok {
-			if matchIPAddrChunk == nil {
-				matchIPAddrChunk = c
+			if nextIPVAddrChunk == nil {
+				nextIPVAddrChunk = c
 			}
 			return true
 		}
 		if _, ok := c.(*DstIPV6AddrChunk); ok {
-			if matchIPAddrChunk == nil {
-				matchIPAddrChunk = c
+			if nextIPVAddrChunk == nil {
+				nextIPVAddrChunk = c
 			}
 			return true
 		}
 
-		nonIPAddrChunk = c
-		return true
+		nextNonIPAddrChunk = c
+		return false
 	})
 
-	if tailIPVal && nonIPAddrChunk == nil {
-		jumpIf.SkipTrue = skipToAllowNum
-		return
+	nextCell := cell.GetNextCell()
+
+	if tailIPVal {
+		if nextNonIPAddrChunk != nil {
+			jumpIf.SkipTrue, _ = calculateJumpIndex(cellIPValIndex, nextNonIPAddrChunk.GetFirstCellIndex())
+		} else {
+			jumpIf.SkipTrue = skipToAllowNum
+		}
 	}
 
-	nextCell := cell.GetNextCell()
 	if nextCell == nil {
-		if matchIPAddrChunk != nil {
-			//jumpIf.SkipFalse = uint8(matchIPAddrChunk.GetFirstCellIndex() - (cell.GetIndex() + IPV6AddrCellInstrNum + nIPValIdx*IPV6AddrCellInstrNum))
-			jumpIf.SkipFalse = uint8(matchIPAddrChunk.GetFirstCellIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
+		if nextIPVAddrChunk != nil {
+			jumpIf.SkipFalse = uint8(nextIPVAddrChunk.GetFirstCellIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
 		} else {
 			jumpIf.SkipFalse = skipToRejectNum
 		}
-
-		if tailIPVal {
-			jumpIf.SkipTrue = skipToAllowNum
-			return
-		}
-
 		return
 	}
 
-	//if tailIPVal && nonIPAddrChunk == nil {
-	//	jumpIf.SkipTrue = skipToAllowNum
-	//	return
-	//}
-
-	//jumpIf.SkipFalse = uint8(nextCell.GetIndex() - cell.GetIndex() - IPV6AddrCellInstrNum - nIPValIdx*IPV6AddrCellInstrNum)
 	jumpIf.SkipFalse = uint8(nextCell.GetIndex() - getIPV6CellJumpIfValueIndex(cell, nIPValIdx))
 }
 
@@ -192,8 +180,7 @@ func (t *IPV6AddrValueCell) BuildInstructions(reject bool, chunk IChunk, instruc
 	nextChunk := chunk.GetNextChunk()
 
 	for nIPValIdx, nIPVal := range t.nIPValues {
-
-		allInstrNum := retAllowIndex - t.index - 1 - 1 - nIPValIdx*2
+		allInstrNum := retAllowIndex - t.index - 1 - 1 - nIPValIdx*np.IPV6AddrCellInstrNum
 		skipToAllowNum := uint8(allInstrNum)
 		skipToRejectNum := uint8(allInstrNum) + 1
 

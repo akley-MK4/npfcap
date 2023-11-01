@@ -12,9 +12,9 @@ const (
 	SrcIPV6AbsoluteOffIndex = 22
 	DstIPV6AbsoluteOffIndex = SrcIPV6AbsoluteOffIndex + 16
 
-	IPV6ValuePartsNum = 4
-
+	IPV6ValuePartsNum    = 4
 	IPV6AddrCellInstrNum = 2
+	OneIPV6AddrInstrNum  = IPV6ValuePartsNum * IPV6AddrCellInstrNum
 
 	IPProtoSize                        = 1
 	IPProtocolIPV4AbsoluteOffIndex     = 23
